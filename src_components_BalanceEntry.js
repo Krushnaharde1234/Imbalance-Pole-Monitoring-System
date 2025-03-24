@@ -1,171 +1,177 @@
 import React, { useState } from 'react';
 
-function BalanceEntry({ polesData, onDataUpdate }) {
+function ImbalanceEntry({ polesData, onDataUpdate }) {
     const [polarity, setPolarity] = useState('');
     const [rating, setRating] = useState('');
-    const [balancedQuantity, setBalancedQuantity] = useState('');
-    const [location, setLocation] = useState('');
+    const [quantities, setQuantities] = useState({});
     const [validationErrors, setValidationErrors] = useState({});
 
-    // Function to get existing ratings based on imbalanced poles data
-    const getExistingRatings = () => {
-        const ratings = new Set();
-        polesData.imbalanced.forEach(pole => {
-            ratings.add(pole.rating);
-        });
-        return Array.from(ratings);
+    const handlePolarityChange = (e) => {
+        setPolarity(e.target.value);
+        setQuantities({}); // Reset quantities when polarity changes
     };
 
-    // Function to get existing polarities based on imbalanced poles data
-    const getExistingPolarities = () => {
-        const polarities = new Set();
-        polesData.imbalanced.forEach(pole => {
-            polarities.add(pole.polarity);
-        });
-        return Array.from(polarities);
+    const handleRatingChange = (e) => {
+        setRating(e.target.value);
     };
 
-    // Function to get existing locations based on imbalanced poles data
-    const getExistingLocations = () => {
-        const locations = new Set();
-        polesData.imbalanced.forEach(pole => {
-            locations.add(pole.location);
-        });
-        return Array.from(locations);
+    const handleQuantityChange = (poleNumber, value) => {
+        setQuantities({ ...quantities, [poleNumber]: value });
     };
 
     const validate = () => {
         let errors = {};
         if (!polarity) errors.polarity = 'Polarity is required';
         if (!rating) errors.rating = 'Rating is required';
-        if (!balancedQuantity) errors.balancedQuantity = 'Balanced Quantity is required';
-        if (!location) errors.location = 'Location is required';
-        if (isNaN(balancedQuantity) || parseFloat(balancedQuantity) <= 0) {
-            errors.balancedQuantity = 'Balanced Quantity must be a positive number';
+        if (rating && (isNaN(rating) || parseFloat(rating) < 0.5 || parseFloat(rating) > 80)) {
+            errors.rating = 'Rating must be between 0.5 and 80';
+        }
+
+        let numberOfPoles = parseInt(polarity.charAt(0));
+        for (let i = 1; i <= numberOfPoles; i++) {
+            if (!quantities[`pole${i}`]) {
+                errors[`pole${i}`] = `Quantity for Pole ${i} is required`;
+            }
         }
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const calculateImbalance = () => {
         if (!validate()) {
             return;
         }
 
-        // Find the imbalanced pole entry
-        const imbalancedPoleIndex = polesData.imbalanced.findIndex(
-            pole => pole.polarity === polarity && pole.rating === rating && pole.location === location
-        );
-
-        if (imbalancedPoleIndex === -1) {
-            alert('No matching imbalanced pole entry found.');
-            return;
+        let numberOfPoles = parseInt(polarity.charAt(0));
+        let poleQuantities = [];
+        for (let i = 1; i <= numberOfPoles; i++) {
+            poleQuantities.push(parseInt(quantities[`pole${i}`]));
         }
 
-        const imbalancedPole = { ...polesData.imbalanced[imbalancedPoleIndex] };
-        const enteredBalancedQuantity = parseInt(balancedQuantity);
+        const balancedQty = Math.min(...poleQuantities);
+        const imbalanceQty = poleQuantities.reduce((sum, qty) => sum + qty, 0) - (balancedQty * numberOfPoles);
 
-        if (enteredBalancedQuantity > imbalancedPole.imbalanceQty) {
-            alert('Entered balanced quantity exceeds the imbalanced quantity.');
-            return;
-        }
+        return { balancedQty, imbalanceQty };
+    };
 
-        // Update the imbalanced quantity
-        imbalancedPole.imbalanceQty -= enteredBalancedQuantity;
-
-        // Create a new balanced pole entry
-        const newBalancedPole = {
-            polarity: polarity,
-            rating: rating,
-            location: location,
-            balancedQty: enteredBalancedQuantity,
-            balanceDate: new Date().toLocaleDateString()
+    const assignLocation = () => {
+        const { balancedQty, imbalanceQty } = calculateImbalance();
+        let availableLocation = null;
+        let updatedLocations = [...polesData.locations];
+        let newImbalancedPole = {
+            polarity,
+            rating,
+            imbalanceQty,
+            balancedQty,
+            location: null,
+            daysInactive: 0
         };
+
+        // Check if an existing location with the same rating has space
+        for (let i = 0; i < updatedLocations.length; i++) {
+            if (updatedLocations[i].rating === rating && updatedLocations[i].remainingCapacity > 0) {
+                availableLocation = updatedLocations[i];
+                break;
+            }
+        }
+
+        if (availableLocation) {
+            const spaceAvailable = Math.min(availableLocation.remainingCapacity, imbalanceQty);
+            availableLocation.currentQty += spaceAvailable;
+            availableLocation.remainingCapacity -= spaceAvailable;
+            newImbalancedPole.location = availableLocation.location;
+            newImbalancedPole.imbalanceQty = spaceAvailable;
+        } else {
+            // Assign next available location
+            let nextLocation = `A${updatedLocations.length + 1}`;
+            updatedLocations.push({
+                location: nextLocation,
+                rating: rating,
+                polarity: polarity,
+                currentQty: imbalanceQty,
+                remainingCapacity: Math.max(0, 25 - imbalanceQty),
+                status: imbalanceQty > 0 ? 'Active' : 'Balanced'
+            });
+            newImbalancedPole.location = nextLocation;
+        }
 
         // Update poles data
         const updatedPolesData = { ...polesData };
-        if (imbalancedPole.imbalanceQty === 0) {
-            // Move entry to Balanced Poles if imbalance hits 0
-            updatedPolesData.balanced = [...updatedPolesData.balanced, newBalancedPole];
-            updatedPolesData.imbalanced.splice(imbalancedPoleIndex, 1);
-        } else {
-            // Update the imbalanced pole entry
-            updatedPolesData.imbalanced[imbalancedPoleIndex] = imbalancedPole;
-        }
-
+        updatedPolesData.imbalanced = [...updatedPolesData.imbalanced, newImbalancedPole];
+        updatedPolesData.locations = updatedLocations;
         onDataUpdate(updatedPolesData);
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        assignLocation();
+    };
+
+    const handleReset = () => {
+        setPolarity('');
+        setRating('');
+        setQuantities({});
+        setValidationErrors({});
+    };
+
+    let numberOfPoles = polarity ? parseInt(polarity.charAt(0)) : 0;
+    let quantityInputs = [];
+    for (let i = 1; i <= numberOfPoles; i++) {
+        quantityInputs.push(
+            <div key={i} className="form-group">
+                <label htmlFor={`pole${i}`}>Pole {i} Quantity:</label>
+                <input
+                    type="number"
+                    id={`pole${i}`}
+                    value={quantities[`pole${i}`] || ''}
+                    onChange={(e) => handleQuantityChange(`pole${i}`, e.target.value)}
+                    className={validationErrors[`pole${i}`] ? 'is-invalid' : ''}
+                />
+                {validationErrors[`pole${i}`] && <p className="validation-error">{validationErrors[`pole${i}`]}</p>}
+            </div>
+        );
+    }
+
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>Balance Entry</h2>
+        <div className="form-container">
+            <h2>Imbalance Entry</h2>
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="polarity" style={{ marginRight: '10px' }}>Polarity:</label>
+                <div className="form-group">
+                    <label htmlFor="polarity">Polarity:</label>
                     <select
                         id="polarity"
                         value={polarity}
-                        onChange={(e) => setPolarity(e.target.value)}
-                        style={{ padding: '5px', borderColor: validationErrors.polarity ? 'red' : '' }}
+                        onChange={handlePolarityChange}
+                        className={validationErrors.polarity ? 'is-invalid' : ''}
                     >
                         <option value="">Select Polarity</option>
-                        {getExistingPolarities().map(existingPolarity => (
-                            <option key={existingPolarity} value={existingPolarity}>{existingPolarity}</option>
-                        ))}
+                        <option value="2-Pole">2-Pole</option>
+                        <option value="3-Pole">3-Pole</option>
+                        <option value="4-Pole">4-Pole</option>
                     </select>
-                    {validationErrors.polarity && <p style={{ color: 'red' }}>{validationErrors.polarity}</p>}
+                    {validationErrors.polarity && <p className="validation-error">{validationErrors.polarity}</p>}
                 </div>
 
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="rating" style={{ marginRight: '10px' }}>Rating (A):</label>
-                    <select
-                        id="rating"
-                        value={rating}
-                        onChange={(e) => setRating(e.target.value)}
-                        style={{ padding: '5px', borderColor: validationErrors.rating ? 'red' : '' }}
-                    >
-                        <option value="">Select Rating</option>
-                        {getExistingRatings().map(existingRating => (
-                            <option key={existingRating} value={existingRating}>{existingRating}</option>
-                        ))}
-                    </select>
-                    {validationErrors.rating && <p style={{ color: 'red' }}>{validationErrors.rating}</p>}
-                </div>
-
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="location" style={{ marginRight: '10px' }}>Location:</label>
-                    <select
-                        id="location"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        style={{ padding: '5px', borderColor: validationErrors.location ? 'red' : '' }}
-                    >
-                        <option value="">Select Location</option>
-                        {getExistingLocations().map(existingLocation => (
-                            <option key={existingLocation} value={existingLocation}>{existingLocation}</option>
-                        ))}
-                    </select>
-                    {validationErrors.location && <p style={{ color: 'red' }}>{validationErrors.location}</p>}
-                </div>
-
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="balancedQuantity" style={{ marginRight: '10px' }}>Balanced Quantity:</label>
+                <div className="form-group">
+                    <label htmlFor="rating">Rating (A):</label>
                     <input
                         type="number"
-                        id="balancedQuantity"
-                        value={balancedQuantity}
-                        onChange={(e) => setBalancedQuantity(e.target.value)}
-                        style={{ padding: '5px', borderColor: validationErrors.balancedQuantity ? 'red' : '' }}
+                        id="rating"
+                        value={rating}
+                        onChange={handleRatingChange}
+                        className={validationErrors.rating ? 'is-invalid' : ''}
                     />
-                    {validationErrors.balancedQuantity && <p style={{ color: 'red' }}>{validationErrors.balancedQuantity}</p>}
+                    {validationErrors.rating && <p className="validation-error">{validationErrors.rating}</p>}
                 </div>
 
-                <button type="submit" style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Submit</button>
+                {quantityInputs}
+
+                <button type="submit">Submit</button>
+                <button type="reset" onClick={handleReset}>Reset</button>
             </form>
         </div>
     );
 }
 
-export default BalanceEntry;
+export default ImbalanceEntry;
