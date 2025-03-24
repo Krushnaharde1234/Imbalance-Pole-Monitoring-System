@@ -27,7 +27,7 @@ function ImbalanceEntry({ polesData, onDataUpdate }) {
             errors.rating = 'Rating must be between 0.5 and 80';
         }
 
-        let numberOfPoles = parseInt(polarity.charAt(0));
+        let numberOfPoles = polarity ? parseInt(polarity.charAt(0)) : 0;
         for (let i = 1; i <= numberOfPoles; i++) {
             if (!quantities[`pole${i}`]) {
                 errors[`pole${i}`] = `Quantity for Pole ${i} is required`;
@@ -43,7 +43,7 @@ function ImbalanceEntry({ polesData, onDataUpdate }) {
             return;
         }
 
-        let numberOfPoles = parseInt(polarity.charAt(0));
+        let numberOfPoles = polarity ? parseInt(polarity.charAt(0)) : 0;
         let poleQuantities = [];
         for (let i = 1; i <= numberOfPoles; i++) {
             poleQuantities.push(parseInt(quantities[`pole${i}`]));
@@ -119,51 +119,56 @@ function ImbalanceEntry({ polesData, onDataUpdate }) {
     let quantityInputs = [];
     for (let i = 1; i <= numberOfPoles; i++) {
         quantityInputs.push(
-            <div key={i} style={{ marginBottom: '10px' }}>
-                <label htmlFor={`pole${i}`} style={{ marginRight: '10px' }}>Pole {i} Quantity:</label>
+            <div key={i} className="form-group">
+                <label htmlFor={`pole${i}`}>Pole {i} Quantity:</label>
                 <input
                     type="number"
                     id={`pole${i}`}
                     value={quantities[`pole${i}`] || ''}
                     onChange={(e) => handleQuantityChange(`pole${i}`, e.target.value)}
-                    style={{ padding: '5px', borderColor: validationErrors[`pole${i}`] ? 'red' : '' }}
+                    className={validationErrors[`pole${i}`] ? 'is-invalid' : ''}
                 />
-                {validationErrors[`pole${i}`] && <p style={{ color: 'red' }}>{validationErrors[`pole${i}`]}</p>}
+                {validationErrors[`pole${i}`] && <p className="validation-error">{validationErrors[`pole${i}`]}</p>}
             </div>
         );
     }
 
     return (
-        <div style={{ padding: '20px' }}>
+        <div className="form-container">
             <h2>Imbalance Entry</h2>
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="polarity" style={{ marginRight: '10px' }}>Polarity:</label>
-                    <select id="polarity" value={polarity} onChange={handlePolarityChange} style={{ padding: '5px', borderColor: validationErrors.polarity ? 'red' : '' }}>
+                <div className="form-group">
+                    <label htmlFor="polarity">Polarity:</label>
+                    <select
+                        id="polarity"
+                        value={polarity}
+                        onChange={handlePolarityChange}
+                        className={validationErrors.polarity ? 'is-invalid' : ''}
+                    >
                         <option value="">Select Polarity</option>
                         <option value="2-Pole">2-Pole</option>
                         <option value="3-Pole">3-Pole</option>
                         <option value="4-Pole">4-Pole</option>
                     </select>
-                    {validationErrors.polarity && <p style={{ color: 'red' }}>{validationErrors.polarity}</p>}
+                    {validationErrors.polarity && <p className="validation-error">{validationErrors.polarity}</p>}
                 </div>
 
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="rating" style={{ marginRight: '10px' }}>Rating (A):</label>
+                <div className="form-group">
+                    <label htmlFor="rating">Rating (A):</label>
                     <input
                         type="number"
                         id="rating"
                         value={rating}
                         onChange={handleRatingChange}
-                        style={{ padding: '5px', borderColor: validationErrors.rating ? 'red' : '' }}
+                        className={validationErrors.rating ? 'is-invalid' : ''}
                     />
-                    {validationErrors.rating && <p style={{ color: 'red' }}>{validationErrors.rating}</p>}
+                    {validationErrors.rating && <p className="validation-error">{validationErrors.rating}</p>}
                 </div>
 
                 {quantityInputs}
 
-                <button type="submit" style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Submit</button>
-                <button type="reset" onClick={handleReset} style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Reset</button>
+                <button type="submit">Submit</button>
+                <button type="reset" onClick={handleReset}>Reset</button>
             </form>
         </div>
     );
