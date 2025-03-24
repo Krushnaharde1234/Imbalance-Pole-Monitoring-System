@@ -96,6 +96,15 @@ function BalanceEntry({ polesData, onDataUpdate }) {
         }
 
         onDataUpdate(updatedPolesData);
+        handleReset();
+    };
+
+    const handleReset = () => {
+        setPolarity('');
+        setRating('');
+        setBalancedQuantity('');
+        setLocation('');
+        setValidationErrors({});
     };
 
     return (
@@ -163,6 +172,7 @@ function BalanceEntry({ polesData, onDataUpdate }) {
                 </div>
 
                 <button type="submit">Submit</button>
+                <button type="reset" onClick={handleReset}>Reset</button>
             </form>
         </div>
     );
