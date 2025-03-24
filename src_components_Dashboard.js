@@ -27,8 +27,8 @@ function Dashboard({ polesData, onDataUpdate }) {
   }, [polesData, onDataUpdate]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <div style={{ width: '30%', backgroundColor: '#FF9800', padding: '10px', color: 'white' }}>
+    <div className="dashboard">
+      <div className="dashboard-section imbalanced">
         <h2>Imbalanced Poles</h2>
         <table>
           <thead>
@@ -56,7 +56,7 @@ function Dashboard({ polesData, onDataUpdate }) {
         </table>
       </div>
 
-      <div style={{ width: '30%', backgroundColor: '#4CAF50', padding: '10px', color: 'white' }}>
+      <div className="dashboard-section balanced">
         <h2>Balanced Poles</h2>
         <table>
           <thead>
@@ -82,7 +82,7 @@ function Dashboard({ polesData, onDataUpdate }) {
         </table>
       </div>
 
-      <div style={{ width: '30%', backgroundColor: '#E53935', padding: '10px', color: 'white' }}>
+      <div className="dashboard-section aging">
         <h2>Aging Poles</h2>
         <table>
           <thead>
