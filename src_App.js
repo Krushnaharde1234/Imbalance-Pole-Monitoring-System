@@ -4,6 +4,7 @@ import ImbalanceEntry from './components/ImbalanceEntry';
 import BalanceEntry from './components/BalanceEntry';
 import LocationManagement from './components/LocationManagement';
 import Settings from './components/Settings';
+import './style.css'; // Import the CSS file
 
 function App() {
   const [activePage, setActivePage] = useState('dashboard');
@@ -26,20 +27,20 @@ function App() {
   };
 
   return (
-    <div className="App" style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ textAlign: 'left' }}>Imbalance Pole Monitoring System</h1>
-        <div style={{ textAlign: 'right' }}>
-          <p>Current Date/Time: {new Date().toLocaleString()}</p>
+    <div className="App">
+      <header>
+        <h1>Imbalance Pole Monitoring System</h1>
+        <div>
+          <p>Current Date/Time: {new Date().toISOString().slice(0, 19).replace('T', ' ')} (UTC)</p>
         </div>
       </header>
 
-      <nav style={{ marginBottom: '20px' }}>
-        <button onClick={() => setActivePage('dashboard')} style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Dashboard</button>
-        <button onClick={() => setActivePage('imbalanceEntry')} style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Imbalance Entry</button>
-        <button onClick={() => setActivePage('balanceEntry')} style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Balance Entry</button>
-        <button onClick={() => setActivePage('locationManagement')} style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Location Management</button>
-        <button onClick={() => setActivePage('settings')} style={{ padding: '10px', margin: '5px', cursor: 'pointer' }}>Settings</button>
+      <nav>
+        <button onClick={() => setActivePage('dashboard')}>Dashboard</button>
+        <button onClick={() => setActivePage('imbalanceEntry')}>Imbalance Entry</button>
+        <button onClick={() => setActivePage('balanceEntry')}>Balance Entry</button>
+        <button onClick={() => setActivePage('locationManagement')}>Location Management</button>
+        <button onClick={() => setActivePage('settings')}>Settings</button>
       </nav>
 
       {activePage === 'dashboard' && <Dashboard polesData={polesData} onDataUpdate={handleDataUpdate} />}
