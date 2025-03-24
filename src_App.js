@@ -76,7 +76,7 @@ function App() {
                 {activePage === 'imbalanceEntry' && <ImbalanceEntry polesData={polesData} onDataUpdate={handleDataUpdate} />}
                 {activePage === 'balanceEntry' && <BalanceEntry polesData={polesData} onDataUpdate={handleDataUpdate} />}
                 {activePage === 'locationManagement' && <LocationManagement polesData={polesData} onDataUpdate={handleDataUpdate} />}
-                {activePage === 'settings' && <Settings />}
+                {activePage === 'settings' && <Settings polesData={polesData} onDataUpdate={handleDataUpdate} />}
             </main>
         </div>
     );
