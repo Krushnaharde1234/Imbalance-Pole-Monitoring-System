@@ -2,7 +2,7 @@ import React from 'react';
 
 function LocationManagement({ polesData }) {
     return (
-        <div style={{ padding: '20px' }}>
+        <div className="location-management-container">
             <h2>Location Management</h2>
             <table>
                 <thead>
@@ -23,7 +23,7 @@ function LocationManagement({ polesData }) {
                             <td>{location.polarity}</td>
                             <td>{location.currentQty}</td>
                             <td>{location.remainingCapacity}</td>
-                            <td style={{ color: location.remainingCapacity === 0 ? 'red' : (location.currentQty > 0 ? 'orange' : 'green') }}>
+                            <td className={location.remainingCapacity === 0 ? 'full' : (location.currentQty > 0 ? 'partially-filled' : 'balanced')}>
                                 {location.remainingCapacity === 0 ? 'Full' : (location.currentQty > 0 ? 'Partially Filled' : 'Balanced')}
                             </td>
                         </tr>
