@@ -39,6 +39,7 @@ function Dashboard({ polesData, onDataUpdate }) {
                             <th>Imbalance Qty</th>
                             <th>Balanced Qty</th>
                             <th>Days Inactive</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,6 +51,13 @@ function Dashboard({ polesData, onDataUpdate }) {
                                 <td>{pole.imbalanceQty}</td>
                                 <td>{pole.balancedQty || 0}</td>
                                 <td>{pole.daysInactive || 0}</td>
+                                <td>
+                                    <button onClick={() => {
+                                        const updatedPolesData = { ...polesData };
+                                        updatedPolesData.imbalanced.splice(index, 1);
+                                        onDataUpdate(updatedPolesData);
+                                    }}>Delete</button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
