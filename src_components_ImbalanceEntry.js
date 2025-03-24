@@ -106,6 +106,7 @@ function ImbalanceEntry({ polesData, onDataUpdate }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         assignLocation();
+        handleReset();
     };
 
     const handleReset = () => {
